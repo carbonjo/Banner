@@ -92,6 +92,7 @@ def get_course(CRN, TERM):
     driver.close()
 
     Students_courses = process_data(dic)
+    Students_courses=Students_courses.sort_index()
     
     if len(email_list) == len(Students_courses):
         Students_courses['Email'] = email_list
