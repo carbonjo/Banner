@@ -1,5 +1,6 @@
 
 from setuptools import setup, find_packages
+from .banner import *
 
 setup(
     name='banner',
