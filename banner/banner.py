@@ -80,6 +80,7 @@ def process_data(dic):
     return Students_courses
 
 def get_course(CRN, TERM):
+    TERM=TERM.capitalize()
     driver = initiate_driver()
     login(driver)
     dic = navigate_to_course(driver, TERM, CRN)
@@ -101,3 +102,77 @@ def get_course(CRN, TERM):
 
     print("DONE!")
     return Students_courses
+
+
+import pandas as pd
+from banner import initiate_driver, login, navigate_to_course, get_emails, process_data
+
+def get_courses_matrix(crn_list, term):
+    # Initialize an empty dictionary to store student data
+    student_data = {}
+
+    # Initiate the driver and log in
+    driver = initiate_driver()
+    login(driver)
+
+    # Iterate through the CRNs and retrieve course data
+    for crn in crn_list:
+        dic = navigate_to_course(driver, term, crn)
+        email_list = get_emails(driver)
+        driver.find_element_by_link_text('RETURN TO MENU').click()
+        print('got ', crn)
+
+        Students_courses = process_data(dic)
+        Students_courses = Students_courses.sort_index()
+        if len(email_list) == len(Students_courses):
+            Students_courses['Email'] = email_list
+        else:
+            print("Mismatch in number of students and emails.")
+
+        # Iterate through the students in the course
+        for student_name, row in Students_courses.iterrows():
+            student_id = row['Banner ID']
+            email = row['Email']
+            # If the student name is not in the dictionary, add them
+            if student_name not in student_data:
+                student_data[student_name] = {'Banner ID': student_id, 'email': email, 'CRNs': {crn: 1}}
+            else:
+                # Otherwise, update the student's CRN entry
+                student_data[student_name]['CRNs'][crn] = 1
+
+    # Close the driver
+    driver.close()
+
+    # Create a DataFrame to store the matrix
+    matrix_data = []
+    for student_name, data in student_data.items():
+        row_data = {'Student Name': student_name, 'Banner ID': data['Banner ID'], 'Email': data['email']}
+        row_data.update({crn: data['CRNs'].get(crn, 0) for crn in crn_list})
+        matrix_data.append(row_data)
+
+    matrix_df = pd.DataFrame(matrix_data)
+    matrix_df.set_index('Student Name', inplace=True)
+
+    # Add the "Total" column, summing the values across the CRN columns
+    matrix_df['Total'] = matrix_df[crn_list].sum(axis=1)
+
+    # Calculate the sum for each CRN column (excluding "Banner ID" and "Email")
+    enrollment_row = {'Banner ID': '', 'Email': ''}
+    enrollment_row.update({crn: matrix_df[crn].sum() for crn in crn_list})
+    enrollment_row['Total'] = matrix_df['Total'].sum()
+
+    # Append the "Enrollment" row to the DataFrame
+    enrollment_df = pd.DataFrame([enrollment_row], index=['Enrollment'])
+    matrix_df = pd.concat([enrollment_df, matrix_df])
+
+    # Reorder the columns to place the "Total" column at the end
+    matrix_df = matrix_df[['Banner ID', 'Email'] + crn_list + ['Total']]
+
+    print("DONE!")
+    return matrix_df
+
+
+
+
+
+
