@@ -105,7 +105,6 @@ def get_course(CRN, TERM):
 
 
 import pandas as pd
-from banner import initiate_driver, login, navigate_to_course, get_emails, process_data
 
 def get_courses_matrix(crn_list, term):
     # Initialize an empty dictionary to store student data
