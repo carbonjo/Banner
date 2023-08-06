@@ -25,7 +25,7 @@ def initiate_driver():
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
-        driver = webdriver.Chrome('chromedriver', options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options)
     else:
         # Setup for running locally
         chrome_options = Options()
