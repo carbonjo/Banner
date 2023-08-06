@@ -5,12 +5,35 @@ import getpass
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+import os
+import sys
+
+def install_dependencies():
+    # Check if we are running in Google Colab
+    if 'google.colab' in sys.modules:
+        os.system('apt-get update')
+        os.system('apt install -y chromium-chromedriver')
+        os.system('cp /usr/lib/chromium-browser/chromedriver /usr/bin')
+        os.system('pip install selenium')
 
 def initiate_driver():
-    option = webdriver.ChromeOptions()
-    option.add_argument("--headless")
-    driver = webdriver.Chrome(executable_path="/Users/carbonjo/Desktop/chromedriver", options=option)
+    # Check if we are running in Google Colab and install dependencies if needed
+    if 'google.colab' in sys.modules:
+        install_dependencies()
+        # Setup for running in Google Colab
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome('chromedriver', options=chrome_options)
+    else:
+        # Setup for running locally
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        driver = webdriver.Chrome(executable_path="/Users/carbonjo/Desktop/chromedriver", options=chrome_options)
+    
     return driver
+
 
 def login(driver):
     # This is the log in page for banner
