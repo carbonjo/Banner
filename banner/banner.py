@@ -30,7 +30,7 @@ def initiate_driver():
         # Setup for running locally
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        driver = webdriver.Chrome(executable_path="/Users/carbonjo/Desktop/chromedriver", options=chrome_options)
+        driver = webdriver.Chrome("/Users/carbonjo/Desktop/chromedriver", options=chrome_options)
     
     return driver
 
