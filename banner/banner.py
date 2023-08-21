@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.options import Options
 def initiate_driver():
     option = webdriver.ChromeOptions()
     option.add_argument("--headless")
-    driver = webdriver.Chrome(executable_path="/Users/carbonjo/Desktop/chromedriver", options=option)
+    driver = webdriver.Chrome(options=option)
     return driver
 
 def login(driver):
@@ -26,7 +26,7 @@ def login(driver):
     element = driver.find_element_by_id("PIN")
     element.send_keys(password)
     element.send_keys(Keys.RETURN)
-    
+
     # Go to the Faculty and Staff page
     driver.find_element_by_link_text('Faculty and Staff').click()
 
@@ -63,16 +63,16 @@ def process_data(dic):
         dic[k].rename(columns=dic[k].iloc[0], inplace=True)
         dic[k].drop([0], axis=0, inplace=True)
 
-    # Create a list of students    
+    # Create a list of students
     students = []
     for k in dic.keys():
         students += list(dic[k]['Student Name'].values)
-    students = list(set(students))        
+    students = list(set(students))
 
     nid = []
     for k in dic.keys():
         nid += zip(list(dic[k]['Student Name'].values), list(dic[k]['ID'].values))
-    nid = dict(list(set(nid)))        
+    nid = dict(list(set(nid)))
 
     # Create a DataFrame with the Banner ID and the email
     Students_courses = pd.DataFrame(list(nid.items()), columns=['Student Name', 'Banner ID'])
@@ -85,7 +85,7 @@ def get_course(CRN, TERM):
     login(driver)
     dic = navigate_to_course(driver, TERM, CRN)
     email_list = get_emails(driver)
-    
+
     # Return to menu for another search
     driver.find_element_by_link_text('RETURN TO MENU').click()
     print('got ', CRN)
@@ -94,7 +94,7 @@ def get_course(CRN, TERM):
 
     Students_courses = process_data(dic)
     Students_courses=Students_courses.sort_index()
-    
+
     if len(email_list) == len(Students_courses):
         Students_courses['Email'] = email_list
     else:
@@ -169,9 +169,3 @@ def get_courses_matrix(crn_list, term):
 
     print("DONE!")
     return matrix_df
-
-
-
-
-
-
