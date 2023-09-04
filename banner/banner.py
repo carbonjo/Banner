@@ -5,12 +5,22 @@ import getpass
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 
 def initiate_driver():
-    option = webdriver.ChromeOptions()
-    option.add_argument("--headless")
-    driver = webdriver.Chrome(options=option)
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    
+    driver = webdriver.Chrome(options=options)
     return driver
+
+########
 
 def login(driver):
     # This is the log in page for banner
@@ -21,28 +31,29 @@ def login(driver):
     password = getpass.getpass("password: ")
 
     # Now log in with credentials
-    element = driver.find_element_by_id("UserID")
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "UserID")))
     element.send_keys(user_name)
-    element = driver.find_element_by_id("PIN")
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "PIN")))
     element.send_keys(password)
     element.send_keys(Keys.RETURN)
-
+    
     # Go to the Faculty and Staff page
-    driver.find_element_by_link_text('Faculty and Staff').click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, 'Faculty and Staff'))).click()
 
 def navigate_to_course(driver, TERM, CRN):
     dic = {}
 
-    driver.find_element_by_link_text('Select Term').click()
-    driver.find_element_by_name('term').send_keys(TERM)
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, 'Select Term'))).click()
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, 'term')))
+    element.send_keys(TERM)
 
     # The submit button is the second class="dedefault"
-    driver.find_elements_by_class_name("dedefault")[2].click()
+    WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "dedefault")))[2].click()
 
-    driver.find_element_by_link_text('Summary Class List').click()
-    driver.find_element_by_link_text('Enter CRN Directly').click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, 'Summary Class List'))).click()
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, 'Enter CRN Directly'))).click()
 
-    element = driver.find_element_by_id("crn_input_id")
+    element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "crn_input_id")))
     element.send_keys(CRN)
     element.send_keys(Keys.RETURN)
 
@@ -52,9 +63,8 @@ def navigate_to_course(driver, TERM, CRN):
 
 def get_emails(driver):
     # Extract emails before returning to menu
-    email_list = driver.find_element_by_link_text('Email class').get_attribute("href").split('?Bcc=')[1].split(';')
+    email_list = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.LINK_TEXT, 'Email class'))).get_attribute("href").split('?Bcc=')[1].split(';')
     return email_list
-
 def process_data(dic):
     # Fixes the column names and keeps only name and id
     for k in dic.keys():
@@ -63,38 +73,42 @@ def process_data(dic):
         dic[k].rename(columns=dic[k].iloc[0], inplace=True)
         dic[k].drop([0], axis=0, inplace=True)
 
-    # Create a list of students
+    # Create a list of students    
     students = []
     for k in dic.keys():
         students += list(dic[k]['Student Name'].values)
-    students = list(set(students))
+    students = list(set(students))        
 
     nid = []
     for k in dic.keys():
         nid += zip(list(dic[k]['Student Name'].values), list(dic[k]['ID'].values))
-    nid = dict(list(set(nid)))
-
-    # Create a DataFrame with the Banner ID and the email
+    nid = dict(list(set(nid)))  
+        # Create a DataFrame with the Banner ID and the email
     Students_courses = pd.DataFrame(list(nid.items()), columns=['Student Name', 'Banner ID'])
     Students_courses.set_index('Student Name', inplace=True)
     return Students_courses
 
 def get_course(CRN, TERM):
     TERM=TERM.capitalize()
+    print(TERM)
     driver = initiate_driver()
+    driver.implicitly_wait(10)  # waits for 10 seconds
     login(driver)
     dic = navigate_to_course(driver, TERM, CRN)
+    print(dic)
     email_list = get_emails(driver)
-
+    
     # Return to menu for another search
-    driver.find_element_by_link_text('RETURN TO MENU').click()
+    #driver.find_element_by_link_text('RETURN TO MENU').click()
+    driver.find_element(By.LINK_TEXT,'RETURN TO MENU').click()
+
     print('got ', CRN)
     time.sleep(2)
     driver.close()
 
     Students_courses = process_data(dic)
     Students_courses=Students_courses.sort_index()
-
+    
     if len(email_list) == len(Students_courses):
         Students_courses['Email'] = email_list
     else:
@@ -103,8 +117,6 @@ def get_course(CRN, TERM):
     print("DONE!")
     return Students_courses
 
-
-import pandas as pd
 
 def get_courses_matrix(crn_list, term):
     # Initialize an empty dictionary to store student data
@@ -118,7 +130,9 @@ def get_courses_matrix(crn_list, term):
     for crn in crn_list:
         dic = navigate_to_course(driver, term, crn)
         email_list = get_emails(driver)
-        driver.find_element_by_link_text('RETURN TO MENU').click()
+        #driver.find_element_by_link_text('RETURN TO MENU').click()
+        driver.find_element(By.LINK_TEXT,'RETURN TO MENU').click()
+
         print('got ', crn)
 
         Students_courses = process_data(dic)
@@ -169,3 +183,4 @@ def get_courses_matrix(crn_list, term):
 
     print("DONE!")
     return matrix_df
+

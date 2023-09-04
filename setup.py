@@ -9,5 +9,5 @@ setup(
     author_email='joaquin.o.carbonara@gmail.com',
     description='Tools to facilitate access to Banner',
     packages=find_packages(),    
-    install_requires=['pandas', 'selenium==3.141.0'],
+    install_requires=['pandas', 'selenium==4.11.2'],
 )
