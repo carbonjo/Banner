@@ -184,3 +184,5 @@ def get_courses_matrix(crn_list, term):
     print("DONE!")
     return matrix_df
 
+def banner_test(x):
+    print(x)
