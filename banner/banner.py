@@ -127,31 +127,34 @@ def get_courses_matrix(crn_list, term):
     login(driver)
 
     # Iterate through the CRNs and retrieve course data
-    for crn in crn_list:
-        dic = navigate_to_course(driver, term, crn)
-        email_list = get_emails(driver)
-        #driver.find_element_by_link_text('RETURN TO MENU').click()
-        driver.find_element(By.LINK_TEXT,'RETURN TO MENU').click()
+    try:
+        for crn in crn_list:
+            dic = navigate_to_course(driver, term, crn)
+            email_list = get_emails(driver)
+            #driver.find_element_by_link_text('RETURN TO MENU').click()
+            driver.find_element(By.LINK_TEXT,'RETURN TO MENU').click()
 
-        print('got ', crn)
+            print('got ', crn)
 
-        Students_courses = process_data(dic)
-        Students_courses = Students_courses.sort_index()
-        if len(email_list) == len(Students_courses):
-            Students_courses['Email'] = email_list
-        else:
-            print("Mismatch in number of students and emails.")
-
-        # Iterate through the students in the course
-        for student_name, row in Students_courses.iterrows():
-            student_id = row['Banner ID']
-            email = row['Email']
-            # If the student name is not in the dictionary, add them
-            if student_name not in student_data:
-                student_data[student_name] = {'Banner ID': student_id, 'email': email, 'CRNs': {crn: 1}}
+            Students_courses = process_data(dic)
+            Students_courses = Students_courses.sort_index()
+            if len(email_list) == len(Students_courses):
+                Students_courses['Email'] = email_list
             else:
-                # Otherwise, update the student's CRN entry
-                student_data[student_name]['CRNs'][crn] = 1
+                print("Mismatch in number of students and emails.")
+
+            # Iterate through the students in the course
+            for student_name, row in Students_courses.iterrows():
+                student_id = row['Banner ID']
+                email = row['Email']
+                # If the student name is not in the dictionary, add them
+                if student_name not in student_data:
+                    student_data[student_name] = {'Banner ID': student_id, 'email': email, 'CRNs': {crn: 1}}
+                else:
+                    # Otherwise, update the student's CRN entry
+                    student_data[student_name]['CRNs'][crn] = 1
+    except:
+        print(crn," error ")
 
     # Close the driver
     driver.close()
